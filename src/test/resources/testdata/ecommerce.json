@@ -1,0 +1,13 @@
+{
+  "checkout": {
+    "full-name": "Selenium Tester",
+    "address": "100 Test Avenue",
+    "city": "Sampletown",
+    "postcode": "00000",
+    "country": "United States",
+    "card-name": "Selenium Tester",
+    "card-number": "4242 4242 4242 4242",
+    "card-expiry": "12/30",
+    "card-cvv": "123"
+  }
+}

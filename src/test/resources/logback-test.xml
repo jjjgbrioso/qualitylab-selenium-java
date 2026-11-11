@@ -1,0 +1,28 @@
+<configuration>
+  <!-- Console for the run, and a file under target/logs for later reading. -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{0} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>target/logs/test-run.log</file>
+    <append>false</append>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{0} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Keep driver and HTTP libraries quiet unless something goes wrong. -->
+  <logger name="io.github.bonigarcia" level="WARN"/>
+  <logger name="org.openqa.selenium" level="WARN"/>
+  <logger name="org.asynchttpclient" level="WARN"/>
+  <logger name="io.netty" level="WARN"/>
+  <logger name="org.apache.hc" level="WARN"/>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>

@@ -1,0 +1,15 @@
+# Build output, reports, screenshots, and logs
+target/
+
+# Credentials: never commit these
+src/test/resources/config/secrets.properties
+.env
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# OS
+.DS_Store
+Thumbs.db

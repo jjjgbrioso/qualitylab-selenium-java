@@ -1,0 +1,7 @@
+{
+  "accounts": {
+    "checking": "acct_alice_chk",
+    "savings": "acct_alice_sav"
+  },
+  "notes": "Account ids belong to the seeded customer used as TEST_USERNAME (alice@qualitylab.test). Account number 1000000003 is another customer's checking account, used as a transfer destination."
+}
