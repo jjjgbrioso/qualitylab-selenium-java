@@ -70,7 +70,7 @@ selenium-java/
     │   │   ├── travel/                  Hotels, hotel, room, booking
     │   │   └── admin/                   Product inventory
     │   ├── steps/                       Step definitions per module
-    │   ├── reporting/                   Execution summary plugin
+    │   ├── reporting/                   Execution summary and HTML + PDF summary report plugins
     │   ├── runners/TestRunner.java      Cucumber + TestNG runner
     │   └── utils/                       Money parsing, test data, screenshots
     └── resources/
@@ -100,6 +100,8 @@ selenium-java/
 | `BROWSER` | `chrome`, `edge` or `firefox` | `chrome` |
 | `HEADLESS` | `true` runs without a visible window | `false` |
 | `TIMEOUT_SECONDS` | Explicit wait limit | `25` (staging), `20` (local) |
+| `OPEN_REPORT` | Open the summary report in Chrome after a run: `always`, `on-failure` or `never` | `always` (never on CI) |
+| `CHROME_PATH` | Chrome location, if it is not in the usual place | Found automatically |
 
 Each value is taken from the first place it is found:
 
@@ -156,6 +158,39 @@ Run these in the `selenium-java` folder. On Windows use `mvnw.cmd` (PowerShell o
 In PowerShell, wrap options that contain dots in quotes, for example `mvnw.cmd test "-Dcucumber.filter.tags=@banking"`.
 
 ## Reports and evidence
+
+### Summary report (opens in Chrome)
+
+Every run ends by writing a one-page summary, with a **Download PDF** button:
+
+| File | Contents |
+| --- | --- |
+| `reports/summary/test-report.html` | Summary of the latest run |
+| `reports/summary/test-report.pdf` | The same summary as an A4 PDF |
+| `reports/history/<date-time>/` | The summary HTML and PDF of every earlier run. This folder is outside `target/`, so `mvnw clean` keeps it. |
+
+The summary shows:
+- the run's date, environment, site, browser and duration, and whether it passed;
+- totals: scenarios, passed, failed, skipped, pass rate;
+- one table per module (E-commerce, Banking, Travel) with each scenario's result and time;
+- each failure's error and the screenshot taken at the moment it failed.
+
+**When the run finishes, the report opens in Google Chrome** (or the default browser if Chrome is not installed). This happens whether you run from IntelliJ or with `mvnw`. Set `OPEN_REPORT` to change it, in `config/<env>.properties`, as an environment variable, or with `-DOPEN_REPORT=never`:
+
+| `OPEN_REPORT` | When the report opens |
+| --- | --- |
+| `always` (default) | After every run |
+| `on-failure` | Only when a scenario failed |
+| `never` | Never. Open `reports/summary/test-report.html` yourself. |
+
+It never opens on CI (when `CI` is set).
+
+How it works:
+- The report is made by `reporting/SummaryReportPlugin.java`, a Cucumber plugin registered in `TestRunner`.
+- The PDF is printed by headless Chrome through WebDriver's print command, so no extra library is needed.
+- The PDF is embedded in the Download button, so the download works even though the report is a local file.
+
+### Other reports
 
 After a run, look in `target/`:
 

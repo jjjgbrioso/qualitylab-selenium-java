@@ -1,5 +1,7 @@
 # Build output, reports, screenshots, and logs
 target/
+# Summary reports (HTML + PDF) and their history
+reports/
 
 # Credentials: never commit these
 src/test/resources/config/secrets.properties

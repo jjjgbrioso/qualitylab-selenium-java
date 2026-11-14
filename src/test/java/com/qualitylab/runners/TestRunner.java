@@ -16,7 +16,8 @@ import org.testng.annotations.DataProvider;
             "summary",
             "html:target/cucumber-reports/cucumber.html",
             "json:target/cucumber-reports/cucumber.json",
-            "com.qualitylab.reporting.ExecutionSummaryPlugin"
+            "com.qualitylab.reporting.ExecutionSummaryPlugin",
+            "com.qualitylab.reporting.SummaryReportPlugin"
         },
         monochrome = true)
 public class TestRunner extends AbstractTestNGCucumberTests {
