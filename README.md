@@ -1,5 +1,8 @@
 # QualityLab: Selenium Java BDD framework
 
+> Part of **[QualityLab](https://github.com/jjjgbrioso/QualityLab)**, a QA portfolio project. The app under test is live at https://quality-lab-jb.vercel.app.
+> Test projects: [Selenium Java](https://github.com/jjjgbrioso/qualitylab-selenium-java) · [Playwright TypeScript](https://github.com/jjjgbrioso/qualitylab-playwright-typescript) · [Postman + Newman](https://github.com/jjjgbrioso/qualitylab-api-testing) · [JMeter](https://github.com/jjjgbrioso/qualitylab-jmeter)
+
 Automated UI tests for the deployed QualityLab site. The scenarios are written in Gherkin (Cucumber) and run through TestNG. The framework uses Selenium WebDriver and the Page Object Model.
 
 The framework is independent of the web application. It only drives the site through a browser, so it does not import or change any application code.
@@ -12,6 +15,19 @@ The framework is independent of the web application. It only drives the site thr
 | BDD | Cucumber 7.34 (cucumber-java, cucumber-testng, cucumber-picocontainer) |
 | Runner and reports | TestNG 7.12, Cucumber HTML/JSON, Surefire |
 | Logging | SLF4J with Logback |
+
+## Sample reports
+
+Run against the deployed site on 14 November 2026.
+
+| Run | Result | Report |
+| --- | --- | --- |
+| Fully passed | **28 of 28 scenarios passed** (100%) in headless Chrome, 2m 56s | [PDF](docs/test-reports/passed/test-report.pdf) · [HTML](docs/test-reports/passed/test-report.html) |
+| With failures | 6 of 7 passed, **1 failed** (85.7%). **A real failure:** during this smoke run the live site did not respond, and Chrome showed "This site can't be reached (ERR_TIMED_OUT)". The report shows the error and that screenshot. The next run passed. | [PDF](docs/test-reports/failed/test-report.pdf) · [HTML](docs/test-reports/failed/test-report.html) |
+
+What a report contains: the run details (date, environment, browsers, duration), the totals and pass rate, one table per module with each test's result and time, and for each failure the error message and the screenshot taken when it failed. Open the **PDF** links to read a report on GitHub; GitHub shows HTML files as source code, so download an HTML file and open it in a browser.
+
+The **Full Cucumber report** link in a report only works on the machine that ran the tests.
 
 ## What is tested
 
