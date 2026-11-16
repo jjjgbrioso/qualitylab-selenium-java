@@ -1,0 +1,135 @@
+# Runs the Cucumber scenarios with Selenium and headless Chrome against a throwaway copy of QualityLab built on
+# this machine (-Denv=local, http://localhost:3100) with a fresh PostgreSQL. It never touches the live site.
+name: BDD tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: bdd-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  selenium:
+    name: Selenium + Cucumber (Chrome)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: qualitylab
+          POSTGRES_PASSWORD: qualitylab_ci
+          POSTGRES_DB: qualitylab_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qualitylab"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      # Settings for the throwaway app, the same as the app's LOCAL environment.
+      APP_ENV: local
+      DATABASE_URL: postgresql://qualitylab:qualitylab_ci@localhost:5432/qualitylab_ci
+      JWT_EXPIRES_IN_SECONDS: "7200"
+      DUPLICATE_WINDOW_SECONDS: "30"
+      NEXT_TELEMETRY_DISABLED: "1"
+      HEADLESS: "true"
+
+    steps:
+      - name: Check out the BDD tests
+        uses: actions/checkout@v5
+
+      - name: Check out the QualityLab app
+        uses: actions/checkout@v5
+        with:
+          repository: jjjgbrioso/QualityLab
+          path: qualitylab
+
+      - name: Set up Node.js 24 (for the app)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: qualitylab/web-app/package-lock.json
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Create a random signing secret for this run
+        run: echo "JWT_SECRET=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
+
+      - name: Build the app and load the seed data
+        working-directory: qualitylab/web-app
+        run: |
+          npm ci
+          npx prisma migrate deploy
+          npm run db:seed
+          npm run build
+
+      - name: Start the app on port 3100
+        working-directory: qualitylab/web-app
+        run: |
+          nohup npm run start -- -p 3100 > "$RUNNER_TEMP/app.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3100/api/v1/health > /dev/null; then echo "App is up"; exit 0; fi
+            sleep 2
+          done
+          echo "The app did not start:"; cat "$RUNNER_TEMP/app.log"; exit 1
+
+      # The test accounts are the app's public seed accounts, which exist only in this throwaway database.
+      # Reading them from the seed file keeps them in sync and keeps passwords out of this repo.
+      - name: Use the seed test accounts
+        run: |
+          node <<'EOF'
+          const fs = require('node:fs');
+          const seed = fs.readFileSync('qualitylab/web-app/scripts/seed-data.ts', 'utf8');
+          const read = (name) => {
+            const match = seed.match(new RegExp(`${name}\\s*=\\s*"([^"]+)"`));
+            if (!match) throw new Error(`${name} not found in seed-data.ts`);
+            return match[1];
+          };
+          const customer = read('CUSTOMER_PASSWORD');
+          const admin = read('ADMIN_PASSWORD');
+          console.log(`::add-mask::${customer}`);
+          console.log(`::add-mask::${admin}`);
+          fs.appendFileSync(process.env.GITHUB_ENV, [
+            'TEST_USERNAME=alice@qualitylab.test',
+            `TEST_PASSWORD=${customer}`,
+            'ADMIN_USERNAME=admin@qualitylab.test',
+            `ADMIN_PASSWORD=${admin}`,
+          ].join('\n') + '\n');
+          EOF
+
+      # -Denv=local is required: the pom's default (staging) is passed as a system property and wins over ENV.
+      - name: Run the scenarios
+        run: bash mvnw -B test -Denv=local
+
+      - name: Save the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-reports
+          path: |
+            reports/summary/
+            target/cucumber-reports/
+            target/screenshots/
+            target/surefire-reports/
+          if-no-files-found: ignore
+
+      - name: Show the app log
+        if: failure()
+        run: tail -n 100 "$RUNNER_TEMP/app.log" || true
