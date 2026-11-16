@@ -173,6 +173,12 @@ Run these in the `selenium-java` folder. On Windows use `mvnw.cmd` (PowerShell o
 
 In PowerShell, wrap options that contain dots in quotes, for example `mvnw.cmd test "-Dcucumber.filter.tags=@banking"`.
 
+Choose the environment with `-Denv=`, not an `ENV` variable: the pom passes its default (`staging`) as a system property, which wins over `ENV`.
+
+### Continuous integration
+
+GitHub Actions ([`.github/workflows/bdd-tests.yml`](.github/workflows/bdd-tests.yml)) runs every scenario in headless Chrome on every pull request and push to `main`. It builds a throwaway copy of QualityLab with a fresh PostgreSQL database on GitHub's machine, starts it on port 3100 (`-Denv=local`) and signs in with the app's seed test accounts, so it never touches the live site. The summary report, Cucumber report, failure screenshots and Surefire results are saved with each run as the `selenium-reports` artifact.
+
 ## Reports and evidence
 
 ### Summary report (opens in Chrome)
